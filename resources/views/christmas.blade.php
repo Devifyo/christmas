@@ -12,7 +12,7 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
@@ -21,13 +21,19 @@
                     fontFamily: {
                         'serif': ['"Playfair Display"', 'serif'],
                         'sans': ['Lato', 'sans-serif'],
+                        'cinzel': ['Cinzel', 'serif'],
                     },
                     colors: {
                         'gold-light': '#FCE7AC',
+                        'gold-med': '#D4AF37',
                         'gold-dark': '#C5A059',
+                    },
+                    backgroundImage: {
+                        'gold-gradient': 'linear-gradient(135deg, #FCE7AC 0%, #C5A059 50%, #FCE7AC 100%)',
                     },
                     dropShadow: {
                         'glow': '0 0 10px rgba(252, 231, 172, 0.5)',
+                        'red-glow': '0 0 10px rgba(239, 68, 68, 0.8)',
                     }
                 }
             }
@@ -41,40 +47,61 @@
             overflow-y: auto;
         }
 
-        /* Snowflake styling */
-        .snowflake {
-            position: absolute;
-            background-color: white;
-            border-radius: 50%;
+        /* Canvas for Realistic Snow */
+        #snow-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
             z-index: 50;
         }
 
-        /* Content Gradient */
+        /* Refined Content Gradient */
         .content-gradient {
             background: linear-gradient(to bottom,
                 rgba(0,0,0,0) 0%,
-                rgba(0,0,0,0.4) 10%,
-                rgba(0,0,0,0.8) 30%,
-                rgba(0,0,0,0.95) 100%);
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
+                rgba(0,0,0,0.3) 15%,
+                rgba(0,0,0,0.7) 40%,
+                rgba(0,0,0,0.85) 100%);
+            backdrop-filter: blur(1px);
+            -webkit-backdrop-filter: blur(1px);
         }
 
-        /* Text Styling */
-        .text-glow-gold {
-            text-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+        /* Typography Effects */
+        .text-gradient-gold {
+            background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 5s linear infinite;
         }
 
-        .text-shadow-strong {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        .text-shadow-elegant {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Glassmorphism Card */
+        .glass-card {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         /* Entrance Animations */
         .reveal-up {
             opacity: 0;
-            transform: translateY(30px);
-            transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform: translateY(40px);
+            transition: all 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
         .reveal-up.active {
@@ -93,30 +120,32 @@
         }
     </style>
 </head>
-<body class="w-full relative text-gray-100">
+<body class="w-full relative text-gray-100 antialiased selection:bg-gold-dark selection:text-white">
 
     <!-- Top Scroll Progress Bar -->
-    <div class="fixed top-0 left-0 w-full h-1.5 z-[60] bg-white/5">
-        <div id="progress-bar" class="h-full bg-gradient-to-r from-gold-dark to-gold-light w-0 shadow-[0_0_15px_rgba(252,231,172,0.6)] rounded-r-full"></div>
+    <div class="fixed top-0 left-0 w-full h-1 z-[60] bg-white/5">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-gold-dark via-gold-light to-gold-dark w-0 shadow-[0_0_15px_rgba(252,231,172,0.6)] rounded-r-full"></div>
     </div>
 
-    <!-- Fixed Background Image -->
-    <div class="fixed inset-0 z-0">
+    <!-- Fixed Background Image Container -->
+    <div class="fixed inset-0 z-0 bg-black flex items-center justify-center">
+        <!-- Full Screen Object Cover -->
         <img src="https://res.cloudinary.com/dqykb5j5k/image/upload/v1766600051/church_slexno.jpg"
-             class="w-full h-full object-cover object-center"
+             class="w-full h-full object-cover object-center opacity-80"
              alt="Church Background">
+        
+        <!-- Vignette Overlay for focus -->
         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30"></div>
     </div>
 
-    <!-- Snow Container -->
-    <div id="snow-container" class="fixed inset-0 z-50 pointer-events-none"></div>
+    <!-- Realistic Snow Canvas -->
+    <canvas id="snow-canvas"></canvas>
 
-    <!-- Scroll Indicator (UPDATED: Centered & Dynamic & RED GLOW) -->
-    <!-- inset-x-0 + justify-center ensures perfect centering across full width -->
-    <div id="scroll-indicator" class="fixed bottom-12 inset-x-0 z-40 flex flex-col items-center justify-center animate-bounce pointer-events-none">
-        <span class="text-xs uppercase tracking-[0.3em] mb-2 font-sans font-bold text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.9)]">Scroll Down</span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+    <!-- Scroll Indicator (Red & Glowing) -->
+    <div id="scroll-indicator" class="fixed bottom-12 inset-x-0 z-40 flex flex-col items-center justify-center animate-bounce pointer-events-none opacity-0 transition-opacity duration-700">
+        <span class="text-xs font-bold tracking-[0.2em] mb-2 font-sans text-red-500 drop-shadow-red-glow uppercase">Scroll Down</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 drop-shadow-red-glow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
         </svg>
     </div>
 
@@ -127,69 +156,70 @@
         <div class="h-[50vh] w-full"></div>
 
         <!-- Content Section -->
-        <main class="w-full content-gradient px-6 pb-20 pt-16 flex flex-col items-center text-center min-h-[60vh]">
+        <main class="w-full content-gradient px-6 pb-32 pt-20 flex flex-col items-center text-center min-h-[60vh]">
 
-            <div class="max-w-xl w-full">
+            <div class="max-w-2xl w-full">
 
                 <!-- Title Block -->
-                <div class="reveal-up mb-10">
-                    <p class="font-serif italic text-gold-light text-lg tracking-wider mb-2 text-shadow-strong">To My Dearest</p>
-                    <h1 class="font-serif text-5xl md:text-7xl text-white font-bold tracking-wide text-glow-gold drop-shadow-lg">
+                <div class="reveal-up mb-16">
+                    <p class="font-cinzel text-gold-light text-sm tracking-[0.3em] mb-4 text-shadow-elegant opacity-90">To My Dearest</p>
+                    <h1 class="font-serif text-6xl md:text-8xl font-bold tracking-tight text-gradient-gold drop-shadow-2xl py-2">
                         Visa
                     </h1>
                 </div>
 
                 <!-- Opening Message -->
-                <div class="space-y-8 font-sans text-lg md:text-xl font-light leading-relaxed text-gray-200">
+                <div class="space-y-10 font-sans text-lg md:text-xl font-light leading-loose text-gray-100">
 
-                    <p class="reveal-up font-serif italic text-2xl text-white text-shadow-strong">
-                        Merry Christmas.
+                    <p class="reveal-up font-serif italic text-3xl text-white text-shadow-elegant border-b border-white/10 pb-8 inline-block px-10">
+                        Merry Christmas
                     </p>
 
-                    <div class="reveal-up space-y-3">
-                        <p class="text-shadow-strong">I want you to know that I am always here for you.</p>
-                        <p class="text-gold-light font-serif text-2xl tracking-wide text-shadow-strong">Never think of me as a stranger.</p>
+                    <div class="reveal-up space-y-4">
+                        <p class="text-shadow-elegant">I want you to know that I am always here for you.</p>
+                        <p class="text-gold-light font-serif text-2xl tracking-wide text-shadow-elegant drop-shadow-lg">Never think of me as a stranger.</p>
                     </div>
 
-                    <p class="reveal-up opacity-90 text-shadow-strong">
+                    <p class="reveal-up opacity-90 text-shadow-elegant max-w-lg mx-auto">
                         I am the same person from our old days. <br>
                         Perhaps the only thing that has changed <br>
                         is the way you see me now.
                     </p>
 
                     <!-- Wishes -->
-                    <div class="reveal-up py-4">
-                        <p class="mb-4 text-shadow-strong">
-                            My heart silently prays for your well-being every day.
+                    <div class="reveal-up py-8 px-4">
+                        <p class="mb-6 text-shadow-elegant">
+                            My heart silently prays for your well-being every day. 
                             May you be blessed with perfect health, safety, and a life filled with the joy you truly deserve.
                         </p>
-                        <p class="text-white font-medium text-shadow-strong">
+                        <p class="text-white font-medium text-shadow-elegant">
                             I also send my deepest, heartfelt wishes for your mom. <br>
                             May God bless her with good health, strength, and happiness always.
                         </p>
                     </div>
 
-                    <!-- Divider -->
-                    <div class="reveal-up w-24 h-px bg-gold-dark/60 mx-auto my-8"></div>
+                    <!-- Divider icon -->
+                    <div class="reveal-up text-gold-dark/60 text-2xl my-8">✦</div>
 
                     <!-- Bible Section -->
-                    <div class="reveal-up space-y-6">
-                         <p class="text-base md:text-lg font-light italic text-gray-300 px-2 leading-relaxed">
+                    <div class="reveal-up space-y-8">
+                         <p class="text-base font-light italic text-gray-300 px-4 leading-relaxed text-shadow-elegant">
                             You know I am not very good at reading the Bible, but I always try and respect.
-                            So today, I opened the Bible app you installed and just started reading.
-                            I may not understand everything perfectly yet, but when I stumbled across these lines, my heart just stopped.
+                            So today, I opened the Bible app you installed and just started reading. 
+                            I may not understand everything perfectly yet, but when I stumbled across these lines, my heart just stopped. 
                             I didn't have to look far—these words felt like they were written exactly for how I feel right now:
                         </p>
 
-                        <div class="bg-black/20 rounded-lg p-6 border border-white/10 shadow-inner">
+                        <!-- Glass Card -->
+                        <div class="glass-card rounded-xl p-8 md:p-10 mx-2 transition-transform duration-700 hover:scale-[1.01]">
                             <div class="mb-8">
-                                <p class="font-serif italic text-xl md:text-3xl text-gold-light leading-relaxed drop-shadow-md">
+                                <p class="font-serif italic text-2xl md:text-3xl text-gold-light leading-relaxed drop-shadow-md">
                                     "I thank my God every time I remember you."
                                 </p>
                             </div>
 
                             <div>
-                                <p class="font-serif italic text-lg md:text-2xl text-white/90 leading-relaxed drop-shadow-md">
+                                <p class="font-serif italic text-lg md:text-2xl text-white/95 leading-relaxed drop-shadow-md">
                                     "I pray that you may enjoy good health and that all may go well with you."
                                 </p>
                             </div>
@@ -197,16 +227,19 @@
                     </div>
 
                     <!-- Closing Quote -->
-                    <p class="reveal-up text-sm md:text-base italic text-gray-400 mt-10 mx-auto max-w-sm border-l border-gold-dark/50 pl-4 text-left">
-                        "I know you have restrictions, and I cannot do anything special or grand. So I am just sending this small, silent wish to let you know you are loved."
-                    </p>
+                    <div class="reveal-up mt-16 mx-auto max-w-md">
+                        <div class="h-px w-16 bg-gold-dark/50 mx-auto mb-6"></div>
+                        <p class="text-sm md:text-base italic text-gray-300 text-shadow-elegant font-serif leading-relaxed">
+                            "I know you have restrictions, and I cannot do anything special or grand. So I am just sending this small, silent wish to let you know you are loved."
+                        </p>
+                    </div>
 
                 </div>
 
                 <!-- Footer -->
-                <div class="reveal-up mt-16 mb-8">
-                    <p class="font-serif text-gold-dark text-xs tracking-widest uppercase mb-3">Yours Always,</p>
-                    <p class="font-serif text-3xl text-white">Once stupid</p>
+                <div class="reveal-up mt-20 mb-10">
+                    <p class="font-cinzel text-gold-dark text-[10px] tracking-[0.2em] uppercase mb-4 opacity-80">Yours Always</p>
+                    <p class="font-serif text-3xl text-white text-shadow-elegant">stupid or once stupid</p>
                 </div>
 
             </div>
@@ -236,88 +269,141 @@
                 observer.observe(this);
             });
 
+            // 2. REALISTIC SNOW ENGINE (Canvas)
+            const canvas = document.getElementById('snow-canvas');
+            const ctx = canvas.getContext('2d');
 
-            // 2. Snowfall Logic
-            const snowContainer = $('#snow-container');
-            const maxSnowflakes = 50;
+            let width, height;
+            let flakes = [];
 
-            function createSnowflake() {
-                if ($('.snowflake').length > maxSnowflakes) return;
+            // Configuration
+            const flakeCount = 150; // Number of flakes
+            const minSize = 0.5;
+            const maxSize = 3;
+            const minSpeed = 0.5;
+            const maxSpeed = 2;
 
-                const flake = $('<div class="snowflake"></div>');
-                const size = Math.random() * 3 + 2;
-                const startX = Math.random() * $(window).width();
-                const opacity = Math.random() * 0.5 + 0.3;
-                const duration = Math.random() * 5000 + 8000;
-
-                flake.css({
-                    width: size + 'px',
-                    height: size + 'px',
-                    left: startX + 'px',
-                    top: '-10px',
-                    opacity: opacity,
-                    boxShadow: `0 0 ${size + 2}px white`
-                });
-
-                snowContainer.append(flake);
-
-                flake.animate(
-                    { top: '110vh' },
-                    duration,
-                    'linear',
-                    function() { $(this).remove(); }
-                );
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
             }
 
-            setInterval(createSnowflake, 400);
+            class Snowflake {
+                constructor() {
+                    this.reset(true);
+                }
 
-            // 3. Scroll Behavior (Progress Bar + Smart Indicator)
+                reset(initial = false) {
+                    this.x = Math.random() * width;
+                    this.y = initial ? Math.random() * height : -10;
+                    this.size = Math.random() * (maxSize - minSize) + minSize;
+                    this.speedY = Math.random() * (maxSpeed - minSpeed) + minSpeed;
+                    this.speedX = 0;
+                    this.sway = Math.random() * 0.1; 
+                    this.swaySpeed = Math.random() * 0.05;
+                    this.opacity = Math.random() * 0.5 + 0.3;
+                    this.angle = Math.random() * Math.PI * 2;
+                }
+
+                update() {
+                    this.y += this.speedY;
+                    this.angle += this.swaySpeed;
+                    this.x += Math.sin(this.angle) * this.sway;
+
+                    // Wrap around
+                    if (this.y > height) {
+                        this.reset();
+                    }
+                    if (this.x > width) {
+                        this.x = 0;
+                    } else if (this.x < 0) {
+                        this.x = width;
+                    }
+                }
+
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+                    ctx.fill();
+                }
+            }
+
+            function initSnow() {
+                resize();
+                for (let i = 0; i < flakeCount; i++) {
+                    flakes.push(new Snowflake());
+                }
+                animateSnow();
+            }
+
+            function animateSnow() {
+                ctx.clearRect(0, 0, width, height);
+                flakes.forEach(flake => {
+                    flake.update();
+                    flake.draw();
+                });
+                requestAnimationFrame(animateSnow);
+            }
+
+            window.addEventListener('resize', resize);
+            initSnow();
+
+
+            // 3. Scroll Behavior & Auto Scroll
             const $scrollIndicator = $('#scroll-indicator');
             const $progressBar = $('#progress-bar');
             let scrollTimeout;
+            let hasUserScrolled = false;
+
+            // Show indicator initially after delay if top
+            setTimeout(() => {
+                if($(window).scrollTop() < 50) {
+                    $scrollIndicator.removeClass('opacity-0');
+                }
+            }, 1000);
 
             $(window).on('scroll', function() {
+                hasUserScrolled = true;
                 const scrollTop = $(this).scrollTop();
                 const docHeight = $(document).height();
                 const winHeight = $(window).height();
 
-                // A. Progress Bar
+                // Progress Bar
                 const scrollPercent = (scrollTop / (docHeight - winHeight)) * 100;
                 $progressBar.css('width', scrollPercent + '%');
 
-                // B. Scroll Indicator Logic
-                // 1. Hide immediately when scrolling starts
+                // HIDE Indicator while scrolling
                 $scrollIndicator.addClass('opacity-0');
-
-                // 2. Clear existing timeout to prevent flickering
+                
                 clearTimeout(scrollTimeout);
 
-                // 3. Set a timeout to check if we should show it again
+                // SHOW Indicator if scrolling stops (and not at bottom)
                 scrollTimeout = setTimeout(function() {
-                    // Check if we are near the bottom (within 50px)
-                    const isAtBottom = (scrollTop + winHeight) >= (docHeight - 50);
-
+                    const isAtBottom = (scrollTop + winHeight) >= (docHeight - 20); // Tolerance
+                    
                     if (!isAtBottom) {
-                        // User stopped, but not at the end -> Show Indicator
                         $scrollIndicator.removeClass('opacity-0');
                     } else {
-                        // User is at the end -> Keep Hidden
+                        // If at bottom, ensure it stays hidden
                         $scrollIndicator.addClass('opacity-0');
                     }
-                }, 800); // 800ms delay after scrolling stops
+                }, 500); // 0.5s wait after scroll stops
             });
 
-            // 4. Auto-Scroll Logic (Gentle Start)
+            // 4. Auto-Scroll Logic: If user hasn't scrolled in 3 seconds, nudge them
             setTimeout(function() {
-                if ($(window).scrollTop() < 10) {
+                if (!hasUserScrolled && $(window).scrollTop() < 10) {
                     $('html, body').animate({
-                        scrollTop: $(window).height() * 0.45
-                    }, 3000, 'swing');
+                        scrollTop: $(window).height() * 0.35
+                    }, 2500, 'swing'); // Gentle scroll down
                 }
             }, 3000);
 
             $(window).on('mousedown wheel touchstart', function() {
-                $('html, body').stop();
+                $('html, body').stop(); // Stop auto-scroll if user interacts
             });
         });
     </script>
